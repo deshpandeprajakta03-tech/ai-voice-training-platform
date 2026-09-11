@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+websockets>=15,<16
+python-dotenv
+openai>=1.0.0
+sqlalchemy>=2.0.0
+email-validator>=2.0.0
+pydantic[email]>=2.0.0

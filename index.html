@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Voice Training Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #070d1a;
+            --surface:   rgba(15,23,42,0.85);
+            --border:    rgba(51,75,110,0.6);
+            --border-l:  rgba(51,75,110,0.3);
+            --text:      #e2e8f0;
+            --muted:     #64748b;
+            --dim:       #475569;
+            --blue:      #3b82f6;
+            --blue-dark: #1d4ed8;
+            --green:     #4ade80;
+            --purple:    #a78bfa;
+            --red:       #f87171;
+            --yellow:    #facc15;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            background-image:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(37,99,235,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 90%, rgba(109,40,217,0.10) 0%, transparent 60%);
+            color: var(--text);
+            font-family: 'Inter', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px 80px;
+            gap: 28px;
+        }
+
+        /* ── Page header ── */
+        .page-header { text-align: center; }
+        .page-header h1 {
+            font-size: 28px; font-weight: 700; letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 6px;
+        }
+        .page-header p { font-size: 14px; color: var(--muted); }
+
+        /* ── Tab navigation ── */
+        .tabs {
+            display: flex; gap: 4px;
+            background: rgba(15,23,42,0.7);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tab-btn {
+            padding: 9px 18px; border-radius: 10px; border: none;
+            background: transparent; color: var(--dim);
+            font-family: inherit; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--text); background: rgba(51,75,110,0.3); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #1e3a5f, #1e293b);
+            color: #93c5fd; border: 1px solid rgba(59,130,246,0.4);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* ── Panel ── */
+        .panel {
+            width: 100%; max-width: 820px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 36px 32px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+            display: none;
+        }
+        .panel.active { display: block; }
+
+        /* ── Section label ── */
+        .section-label {
+            font-size: 11px; font-weight: 600; letter-spacing: 1px;
+            text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
+        }
+
+        /* ── Cards grid ── */
+        .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 12px; margin-bottom: 20px; }
+        .card {
+            background: rgba(7,13,26,0.7); border: 1px solid var(--border-l);
+            border-radius: 12px; padding: 14px 16px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+        .card-sub   { font-size: 12px; color: var(--muted); line-height: 1.4; }
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 99px;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+        }
+        .badge-blue   { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .badge-green  { background: rgba(74,222,128,0.1);  color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+        .badge-yellow { background: rgba(250,204,21,0.1);  color: #facc15; border: 1px solid rgba(250,204,21,0.25); }
+        .badge-red    { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+        .badge-purple { background: rgba(167,139,250,0.1); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+
+        /* ── Forms ── */
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 160px; }
+        .form-group label { font-size: 12px; color: var(--dim); font-weight: 500; }
+        input[type=text], input[type=email], select, textarea {
+            background: rgba(15,31,56,0.9); border: 1px solid var(--border);
+            border-radius: 8px; padding: 9px 12px;
+            color: var(--text); font-family: inherit; font-size: 13px;
+            outline: none; transition: border-color 0.2s, box-shadow 0.2s; width: 100%;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        textarea { min-height: 90px; resize: vertical; }
+        select option { background: #0f1f38; color: var(--text); }
+
+        /* ── Buttons ── */
+        button {
+            display: inline-flex; align-items: center; gap: 6px;
+            border: 0; border-radius: 8px; padding: 9px 16px;
+            font-family: inherit; font-size: 13px; font-weight: 600;
+            color: white; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+        }
+        button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+        button:active:not(:disabled) { transform: translateY(0); }
+        button:disabled { opacity: 0.35; cursor: not-allowed; }
+        .btn-primary  { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 2px 10px rgba(37,99,235,0.25); }
+        .btn-danger   { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .btn-ghost    { background: rgba(51,75,110,0.35); border: 1px solid rgba(51,75,110,0.5); }
+        .btn-success  { background: linear-gradient(135deg, #16a34a, #15803d); }
+        .btn-sm       { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+
+        /* ── Table ── */
+        .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-l); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th {
+            padding: 10px 14px; text-align: left;
+            background: rgba(7,13,26,0.8); color: var(--dim);
+            font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
+            border-bottom: 1px solid var(--border-l);
+        }
+        tbody tr { border-bottom: 1px solid rgba(51,75,110,0.15); transition: background 0.15s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(51,75,110,0.1); }
+        tbody td { padding: 10px 14px; color: var(--text); vertical-align: middle; }
+        .td-actions { display: flex; gap: 6px; }
+
+        /* ── Divider ── */
+        hr { border: none; border-top: 1px solid var(--border-l); margin: 20px 0; }
+
+        /* ── Empty state ── */
+        .empty { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 13px; }
+
+        /* ── Toast ── */
+        #toast {
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+            background: #1e293b; border: 1px solid rgba(59,130,246,0.4);
+            color: #93c5fd; padding: 10px 22px; border-radius: 99px;
+            font-size: 13px; font-weight: 500;
+            transition: transform 0.3s ease; z-index: 999; pointer-events: none;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
+        #toast.error { border-color: rgba(248,113,113,0.4); color: #f87171; }
+
+        /* ══════════════════════════════════════
+           VOICE SIMULATOR (Tab 1) styles
+        ══════════════════════════════════════ */
+        .header { text-align: center; margin-bottom: 28px; }
+        .header h2 {
+            font-size: 22px; font-weight: 700;
+            background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 6px;
+        }
+        .header p { font-size: 13px; color: var(--muted); }
+
+        .scenario-bar {
+            background: rgba(7,13,26,0.6); border: 1px solid var(--border-l);
+            border-radius: 14px; padding: 14px 18px; margin-bottom: 24px;
+        }
+        .scenario-select-wrap { position: relative; }
+        .scenario-select-wrap::after {
+            content: '▾'; position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%); color: var(--dim); pointer-events: none;
+        }
+        #scenarioSelect {
+            width: 100%; appearance: none; -webkit-appearance: none;
+            background: rgba(15,31,56,0.9); border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 36px 10px 12px;
+            color: var(--text); font-family: inherit; font-size: 14px; font-weight: 500;
+            cursor: pointer; outline: none; transition: border-color 0.2s;
+        }
+        #scenarioSelect:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        #scenarioSelect:disabled { opacity: 0.4; cursor: not-allowed; }
+        .scenario-desc { margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.5; min-height: 16px; }
+
+        .speakers { display: flex; justify-content: center; gap: 56px; margin: 8px 0 28px; }
+        .speaker { text-align: center; }
+        .orb-wrap { position: relative; width: 110px; height: 110px; margin: 0 auto 10px; }
+        .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; opacity: 0; transition: opacity 0.3s; }
+        .orb {
+            position: absolute; inset: 14px; border-radius: 50%;
+            background: #0f1f38; border: 2px solid #2d4263;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 3px;
+            transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+        }
+        .orb-icon { font-size: 20px; line-height: 1; }
+        .orb-text { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--dim); transition: color 0.3s; }
+        .speaker-label { font-size: 12px; font-weight: 500; color: var(--dim); transition: color 0.3s; min-height: 18px; }
+        #userOrb.active .orb { background: #052e16; border-color: var(--green); box-shadow: 0 0 22px rgba(74,222,128,0.3); }
+        #userOrb.active .orb-text { color: var(--green); }
+        #userOrb.active + .speaker-label { color: var(--green); }
+        #userOrb.active .ring { border-color: var(--green); opacity: 1; animation: ripple 1.4s ease-out infinite; }
+        #userOrb.active .ring:nth-child(2) { animation-delay: 0.5s; }
+        #botOrb.active .orb { background: #2e1065; border-color: var(--purple); box-shadow: 0 0 22px rgba(167,139,250,0.3); }
+        #botOrb.active .orb-text { color: var(--purple); }
+        #botOrb.active + .speaker-label { color: var(--purple); }
+        #botOrb.active .ring { border-color: var(--purple); opacity: 1; animation: ripple 1.4s ease-out infinite; }
+        #botOrb.active .ring:nth-child(2) { animation-delay: 0.5s; }
+        @keyframes ripple { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.55); opacity: 0; } }
+
+        .status-wrap { display: flex; justify-content: center; margin-bottom: 22px; }
+        #status {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 16px; border-radius: 999px;
+            background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.25);
+            font-size: 13px; font-weight: 500; color: #93c5fd;
+            transition: color 0.3s, background 0.3s, border-color 0.3s;
+        }
+        #status::before {
+            content: ''; width: 7px; height: 7px; border-radius: 50%;
+            background: var(--blue); flex-shrink: 0; animation: pulse-dot 2s infinite;
+        }
+        #status.error { color: #fca5a5; background: rgba(185,28,28,0.1); border-color: rgba(185,28,28,0.3); }
+        #status.error::before { background: #ef4444; animation: none; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        #test  { background: linear-gradient(135deg, #334155, #1e293b); border: 1px solid #475569; }
+        #start { background: linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow: 0 2px 10px rgba(37,99,235,0.3); }
+        #stop  { background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 2px 10px rgba(220,38,38,0.3); }
+
+        .volume-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .volume-row label { font-size: 13px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+        input[type=range] {
+            -webkit-appearance: none; width: 130px; height: 4px;
+            border-radius: 4px; background: #1e3a5f; outline: none; cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%;
+            background: var(--blue); box-shadow: 0 0 5px rgba(59,130,246,0.5); transition: transform 0.15s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        #volValue { font-size: 12px; color: var(--dim); width: 28px; text-align: right; }
+
+        #transcript {
+            min-height: 80px; background: rgba(7,13,26,0.7);
+            border: 1px solid var(--border-l); border-radius: 12px;
+            padding: 14px 16px; font-size: 14px; line-height: 1.7;
+            color: #cbd5e1; white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 16px;
+        }
+        #transcript:empty::before { content: 'Bot response will appear here…'; color: #334155; font-style: italic; }
+        #stats { font-size: 11px; color: #334155; text-align: center; margin-bottom: 14px; }
+
+        details { border: 1px solid var(--border-l); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+        details summary {
+            padding: 9px 14px; font-size: 12px; font-weight: 500; color: var(--dim);
+            cursor: pointer; user-select: none; list-style: none; display: flex; align-items: center; gap: 7px;
+        }
+        details summary::before { content: '▶'; font-size: 9px; transition: transform 0.2s; }
+        details[open] summary::before { transform: rotate(90deg); }
+        #log {
+            height: 110px; overflow-y: auto; font-size: 11px; font-family: 'Courier New', monospace;
+            color: var(--dim); background: rgba(7,13,26,0.6);
+            padding: 10px 14px; white-space: pre-wrap; overflow-wrap: anywhere;
+            border-top: 1px solid var(--border-l);
+        }
+
+        #feedbackPrompt {
+            margin-top: 16px; background: rgba(37,99,235,0.08);
+            border: 1px solid rgba(37,99,235,0.3); border-radius: 14px;
+            padding: 14px 18px; display: none; align-items: center;
+            justify-content: space-between; gap: 14px;
+        }
+        .prompt-text { font-size: 13px; font-weight: 500; color: #93c5fd; }
+        .prompt-text span { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+        .prompt-btns { display: flex; gap: 8px; flex-shrink: 0; }
+        #btnYesFeedback { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        #btnNoFeedback  { background: rgba(51,75,110,0.4); border: 1px solid rgba(51,75,110,0.5); }
+
+        #feedbackPanel { display: none; margin-top: 20px; background: rgba(7,13,26,0.7); border: 1px solid var(--border-l); border-radius: 14px; overflow: hidden; }
+        .feedback-generating { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 24px 20px; color: var(--muted); font-size: 13px; font-weight: 500; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(59,130,246,0.2); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .feedback-header { padding: 14px 18px 10px; border-bottom: 1px solid var(--border-l); display: flex; align-items: center; justify-content: space-between; }
+        .feedback-header .section-label { margin-bottom: 0; }
+        .overall-score { font-size: 22px; font-weight: 700; background: linear-gradient(135deg, #93c5fd, #c4b5fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .overall-label { font-size: 10px; color: var(--dim); text-align: right; }
+        .feedback-rows { padding: 10px 18px 14px; display: flex; flex-direction: column; gap: 9px; }
+        .feedback-row { display: grid; grid-template-columns: 150px 1fr auto; align-items: center; gap: 10px; }
+        .feedback-param { font-size: 12px; font-weight: 600; color: #94a3b8; }
+        .score-bar-wrap { height: 5px; background: rgba(51,75,110,0.3); border-radius: 99px; overflow: hidden; }
+        .score-bar { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+        .score-num { font-size: 12px; font-weight: 700; width: 30px; text-align: right; }
+        .feedback-comment { grid-column: 2 / 4; font-size: 11px; color: var(--muted); margin-top: -3px; line-height: 1.5; }
+
+        /* ══════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════ */
+        @media (max-width: 600px) {
+            .panel { padding: 24px 16px; }
+            .speakers { gap: 28px; }
+            .orb-wrap { width: 90px; height: 90px; }
+            .feedback-row { grid-template-columns: 110px 1fr auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>🎙 AI Voice Training Platform</h1>
+    <p>Customer-support representative training powered by Azure OpenAI &amp; GPT-4.1</p>
+</div>
+
+<!-- Tab navigation -->
+<nav class="tabs">
+    <button class="tab-btn active" onclick="switchTab('simulator')">🎤 Voice Simulator</button>
+    <button class="tab-btn" onclick="switchTab('levels')">📊 Training Levels</button>
+    <button class="tab-btn" onclick="switchTab('calltypes')">📂 Call Types</button>
+    <button class="tab-btn" onclick="switchTab('reps')">👤 Representatives</button>
+    <button class="tab-btn" onclick="switchTab('assignments')">📋 Assignments</button>
+    <button class="tab-btn" onclick="switchTab('history')">📈 Feedback History</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 1 — VOICE SIMULATOR
+══════════════════════════════════════════════════ -->
+<div class="panel active" id="tab-simulator">
+    <div class="header">
+        <h2>🎙 Training Simulator</h2>
+        <p>You are the agent — the bot plays the customer and asks you questions</p>
+    </div>
+
+    <div class="scenario-bar">
+        <div class="section-label">Select Scenario</div>
+        <div class="scenario-select-wrap">
+            <select id="scenarioSelect"></select>
+        </div>
+        <div class="scenario-desc" id="scenarioDesc"></div>
+    </div>
+
+    <div class="speakers">
+        <div class="speaker">
+            <div class="orb-wrap" id="userOrb">
+                <div class="ring"></div><div class="ring"></div>
+                <div class="orb"><span class="orb-icon">🎤</span><span class="orb-text">YOU</span></div>
+            </div>
+            <div class="speaker-label" id="userLabel">Idle</div>
+        </div>
+        <div class="speaker">
+            <div class="orb-wrap" id="botOrb">
+                <div class="ring"></div><div class="ring"></div>
+                <div class="orb"><span class="orb-icon">🤖</span><span class="orb-text">BOT</span></div>
+            </div>
+            <div class="speaker-label" id="botLabel">Idle</div>
+        </div>
+    </div>
+
+    <div class="status-wrap"><div id="status">First click Test Speaker — you should hear a short beep</div></div>
+
+    <div class="controls">
+        <button id="test">🔊 Test Speaker</button>
+        <button id="start">▶ Start</button>
+        <button id="stop" disabled>■ Stop</button>
+    </div>
+
+    <div class="volume-row">
+        <label for="volume">Bot volume</label>
+        <input id="volume" type="range" min="0" max="1" step="0.05" value="0.8">
+        <span id="volValue">80%</span>
+    </div>
+
+    <hr>
+    <div class="section-label">Bot Response</div>
+    <div id="transcript"></div>
+    <div id="stats">Bot audio chunks received: 0</div>
+
+    <details><summary>Connection log</summary><pre id="log"></pre></details>
+
+    <div id="feedbackPrompt">
+        <div class="prompt-text">
+            📋 Generate a feedback report?
+            <span>Scores the representative on 5 parameters.</span>
+        </div>
+        <div class="prompt-btns">
+            <button id="btnYesFeedback">✅ Yes, Generate</button>
+            <button id="btnNoFeedback">✖ No</button>
+        </div>
+    </div>
+    <div id="feedbackPanel"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 2 — TRAINING LEVELS
+══════════════════════════════════════════════════ -->
+<div class="panel" id="tab-levels">
+    <div class="section-label">Training Levels</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+        Manage difficulty tiers that gate scenario complexity for trainees.
+    </p>
+
+    <div class="form-row" id="levelForm">
+        <div class="form-group">
+            <label>Level Name</label>
+            <input type="text" id="levelName" placeholder="e.g. Beginner">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="levelDesc" placeholder="Short description">
+        </div>
+        <div class="form-group" style="max-width:80px;">
+            <label>Order</label>
+            <input type="text" id="levelOrder" placeholder="1">
+        </div>
+        <button class="btn-primary" onclick="createLevel()" style="align-self:flex-end;">+ Add Level</button>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>#</th><th>Name</th><th>Description</th><th>Order</th><th>Actions</th></tr></thead>
+            <tbody id="levelsBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 3 — CALL TYPES
+══════════════════════════════════════════════════ -->
+<div class="panel" id="tab-calltypes">
+    <div class="section-label">Call Types &amp; Topics</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+        Browse call categories and the questions organised under each type.
+    </p>
+
+    <div class="cards" id="callTypeCards"></div>
+
+    <hr>
+    <div class="section-label">Questions</div>
+    <div class="form-row" style="margin-bottom:12px;">
+        <div class="form-group" style="max-width:220px;">
+            <label>Filter by Call Type</label>
+            <select id="qFilterCallType" onchange="loadQuestions()">
+                <option value="">All call types</option>
+            </select>
+        </div>
+        <div class="form-group" style="max-width:140px;">
+            <label>Source</label>
+            <select id="qFilterSource" onchange="loadQuestions()">
+                <option value="">All sources</option>
+                <option value="manual">Manual</option>
+                <option value="extracted">Extracted</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>#</th><th>Question</th><th>Call Type</th><th>Topic</th><th>Source</th><th>Actions</th></tr></thead>
+            <tbody id="questionsBody"></tbody>
+        </table>
+    </div>
+
+    <hr>
+    <div class="section-label">Extract Questions from Transcript (GPT-4.1)</div>
+    <div class="form-group" style="margin-bottom:10px;">
+        <label>Paste redacted transcript below</label>
+        <textarea id="transcriptInput" placeholder="Paste call transcript here… Greetings, authentication, and call-closure lines will be excluded automatically."></textarea>
+    </div>
+    <div class="form-row" style="align-items:center;">
+        <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="saveToDb" style="width:auto;"> Save extracted questions to database
+        </label>
+        <button class="btn-primary" onclick="extractTranscript()">⚡ Extract with GPT-4.1</button>
+    </div>
+    <div id="extractResult" style="display:none;margin-top:14px;"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 4 — REPRESENTATIVES
+══════════════════════════════════════════════════ -->
+<div class="panel" id="tab-reps">
+    <div class="section-label">Representatives</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+        Manage customer-support trainees registered on the platform.
+    </p>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="repName" placeholder="e.g. Alex Johnson">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="repEmail" placeholder="alex@example.com">
+        </div>
+        <button class="btn-primary" onclick="createRep()" style="align-self:flex-end;">+ Add Rep</button>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Registered</th><th>Actions</th></tr></thead>
+            <tbody id="repsBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 5 — ASSIGNMENTS
+══════════════════════════════════════════════════ -->
+<div class="panel" id="tab-assignments">
+    <div class="section-label">Assignments</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+        Assign representatives to specific training levels and call types.
+    </p>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Representative</label>
+            <select id="assignRep"><option value="">Select rep…</option></select>
+        </div>
+        <div class="form-group">
+            <label>Training Level</label>
+            <select id="assignLevel"><option value="">Select level…</option></select>
+        </div>
+        <div class="form-group">
+            <label>Call Type</label>
+            <select id="assignCallType"><option value="">Select call type…</option></select>
+        </div>
+        <button class="btn-primary" onclick="createAssignment()" style="align-self:flex-end;">+ Assign</button>
+    </div>
+
+    <div class="form-row" style="margin-bottom:12px;">
+        <div class="form-group" style="max-width:200px;">
+            <label>Filter by Rep</label>
+            <select id="filterAssignRep" onchange="loadAssignments()">
+                <option value="">All reps</option>
+            </select>
+        </div>
+        <div class="form-group" style="max-width:160px;">
+            <label>Filter by Status</label>
+            <select id="filterAssignStatus" onchange="loadAssignments()">
+                <option value="">All statuses</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>#</th><th>Representative</th><th>Level</th><th>Call Type</th><th>Status</th><th>Assigned</th><th>Actions</th></tr></thead>
+            <tbody id="assignmentsBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TAB 6 — FEEDBACK HISTORY
+══════════════════════════════════════════════════ -->
+<div class="panel" id="tab-history">
+    <div class="section-label">Feedback History</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+        Browse all stored performance reports from completed training calls.
+    </p>
+
+    <div class="form-row" style="margin-bottom:16px;">
+        <div class="form-group" style="max-width:200px;">
+            <label>Filter by Rep</label>
+            <select id="filterHistoryRep" onchange="loadHistory()">
+                <option value="">All reps</option>
+            </select>
+        </div>
+        <div class="form-group" style="max-width:220px;">
+            <label>Filter by Scenario</label>
+            <select id="filterHistoryScenario" onchange="loadHistory()">
+                <option value="">All scenarios</option>
+            </select>
+        </div>
+        <button class="btn-ghost" onclick="loadHistory()" style="align-self:flex-end;">🔄 Refresh</button>
+    </div>
+
+    <div id="historyCards"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+
+function toast(msg, isError = false) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'show' + (isError ? ' error' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+async function api(method, path, body = null) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(path, opts);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+    return data;
+}
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function levelBadge(name) {
+    const map = { Beginner: 'badge-green', Intermediate: 'badge-yellow', Advanced: 'badge-red' };
+    return `<span class="badge ${map[name] || 'badge-blue'}">${name}</span>`;
+}
+
+function statusBadge(s) {
+    const map = { pending: 'badge-blue', in_progress: 'badge-yellow', completed: 'badge-green' };
+    const lbl = s.replace('_', ' ');
+    return `<span class="badge ${map[s] || 'badge-blue'}">${lbl}</span>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB SWITCHING
+═══════════════════════════════════════════════════════════════ */
+const TAB_LOADERS = {
+    levels:      loadLevels,
+    calltypes:   () => { loadCallTypes(); loadQuestions(); },
+    reps:        loadReps,
+    assignments: loadAssignmentsPage,
+    history:     loadHistoryPage,
+};
+
+function switchTab(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    $(`tab-${name}`).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if (TAB_LOADERS[name]) TAB_LOADERS[name]();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB 2 — TRAINING LEVELS
+═══════════════════════════════════════════════════════════════ */
+async function loadLevels() {
+    const levels = await api('GET', '/api/levels');
+    const tbody = $('levelsBody');
+    if (!levels.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No levels yet. Add one above.</td></tr>'; return; }
+    tbody.innerHTML = levels.map(l => `
+        <tr>
+            <td>${l.id}</td>
+            <td>${l.name}</td>
+            <td style="color:var(--muted)">${l.description || '—'}</td>
+            <td>${l.order}</td>
+            <td class="td-actions">
+                <button class="btn-danger btn-sm" onclick="deleteLevel(${l.id})">🗑 Delete</button>
+            </td>
+        </tr>`).join('');
+}
+
+async function createLevel() {
+    const name  = $('levelName').value.trim();
+    const desc  = $('levelDesc').value.trim();
+    const order = parseInt($('levelOrder').value) || 0;
+    if (!name) { toast('Enter a level name.', true); return; }
+    try {
+        await api('POST', '/api/levels', { name, description: desc, order });
+        toast(`Level "${name}" created.`);
+        $('levelName').value = ''; $('levelDesc').value = ''; $('levelOrder').value = '';
+        loadLevels();
+    } catch (e) { toast(e.message, true); }
+}
+
+async function deleteLevel(id) {
+    if (!confirm('Delete this training level?')) return;
+    try { await api('DELETE', `/api/levels/${id}`); toast('Level deleted.'); loadLevels(); }
+    catch (e) { toast(e.message, true); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB 3 — CALL TYPES & QUESTIONS
+═══════════════════════════════════════════════════════════════ */
+let _callTypes = [];
+
+async function loadCallTypes() {
+    _callTypes = await api('GET', '/api/call-types');
+    const container = $('callTypeCards');
+    if (!_callTypes.length) { container.innerHTML = '<p class="empty">No call types found.</p>'; return; }
+    container.innerHTML = _callTypes.map(ct => `
+        <div class="card">
+            <div class="card-title">${ct.title}</div>
+            <div class="card-sub">${ct.description || ''}</div>
+            <span class="badge badge-blue" style="align-self:flex-start;margin-top:4px;">${ct.key}</span>
+        </div>`).join('');
+
+    // Populate filter select
+    const sel = $('qFilterCallType');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">All call types</option>' +
+        _callTypes.map(ct => `<option value="${ct.id}">${ct.title}</option>`).join('');
+    sel.value = cur;
+}
+
+async function loadQuestions() {
+    const ctId   = $('qFilterCallType').value;
+    const source = $('qFilterSource').value;
+    let url = '/api/questions?';
+    if (ctId)   url += `call_type_id=${ctId}&`;
+    if (source) url += `source=${source}&`;
+    const questions = await api('GET', url);
+    const tbody = $('questionsBody');
+    if (!questions.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">No questions found.</td></tr>'; return; }
+    const ctMap = Object.fromEntries(_callTypes.map(c => [c.id, c.title]));
+    tbody.innerHTML = questions.map(q => `
+        <tr>
+            <td>${q.id}</td>
+            <td style="max-width:320px;word-break:break-word;font-size:12px;">${q.text}</td>
+            <td>${ctMap[q.call_type_id] || q.call_type_id}</td>
+            <td style="color:var(--muted);font-size:11px;">${q.topic_id || '—'}</td>
+            <td><span class="badge ${q.source === 'extracted' ? 'badge-purple' : 'badge-blue'}">${q.source}</span></td>
+            <td class="td-actions">
+                <button class="btn-danger btn-sm" onclick="deleteQuestion(${q.id})">🗑</button>
+            </td>
+        </tr>`).join('');
+}
+
+async function deleteQuestion(id) {
+    if (!confirm('Delete this question?')) return;
+    try { await api('DELETE', `/api/questions/${id}`); toast('Question deleted.'); loadQuestions(); }
+    catch (e) { toast(e.message, true); }
+}
+
+async function extractTranscript() {
+    const transcript = $('transcriptInput').value.trim();
+    if (!transcript) { toast('Paste a transcript first.', true); return; }
+    const save = $('saveToDb').checked;
+    const box  = $('extractResult');
+    box.style.display = 'block';
+    box.innerHTML = `<div class="feedback-generating"><div class="spinner"></div>Extracting with GPT-4.1…</div>`;
+    try {
+        const r = await api('POST', '/api/extract', { transcript, save_to_db: save });
+        const savedNote = r.saved ? `<span class="badge badge-green" style="margin-left:8px;">Saved: ${r.inserted} new, ${r.skipped} skipped</span>` : '';
+        box.innerHTML = `
+            <div style="background:rgba(7,13,26,0.7);border:1px solid var(--border-l);border-radius:12px;padding:16px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <span class="badge badge-blue">${r.call_type_title}</span>
+                    <span class="badge badge-purple">${r.topic}</span>
+                    <span style="font-size:12px;color:var(--muted);">${r.question_count} questions extracted</span>
+                    ${savedNote}
+                </div>
+                <ol style="padding-left:18px;display:flex;flex-direction:column;gap:6px;">
+                    ${r.questions.map(q => `<li style="font-size:13px;color:var(--text);line-height:1.6;">${q}</li>`).join('')}
+                </ol>
+            </div>`;
+        if (save) loadQuestions();
+    } catch (e) {
+        box.innerHTML = `<div style="color:var(--red);font-size:13px;padding:12px;">Error: ${e.message}</div>`;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB 4 — REPRESENTATIVES
+═══════════════════════════════════════════════════════════════ */
+let _reps = [];
+
+async function loadReps() {
+    _reps = await api('GET', '/api/representatives');
+    const tbody = $('repsBody');
+    if (!_reps.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">No representatives yet.</td></tr>'; return; }
+    tbody.innerHTML = _reps.map(r => `
+        <tr>
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td style="color:var(--muted);font-size:12px;">${r.email}</td>
+            <td style="color:var(--muted);font-size:12px;">${fmtDate(r.created_at)}</td>
+            <td class="td-actions">
+                <button class="btn-danger btn-sm" onclick="deleteRep(${r.id})">🗑 Delete</button>
+            </td>
+        </tr>`).join('');
+}
+
+async function createRep() {
+    const name  = $('repName').value.trim();
+    const email = $('repEmail').value.trim();
+    if (!name || !email) { toast('Enter name and email.', true); return; }
+    try {
+        await api('POST', '/api/representatives', { name, email });
+        toast(`Rep "${name}" added.`);
+        $('repName').value = ''; $('repEmail').value = '';
+        loadReps();
+    } catch (e) { toast(e.message, true); }
+}
+
+async function deleteRep(id) {
+    if (!confirm('Delete this representative and all their assignments?')) return;
+    try { await api('DELETE', `/api/representatives/${id}`); toast('Representative deleted.'); loadReps(); }
+    catch (e) { toast(e.message, true); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB 5 — ASSIGNMENTS
+═══════════════════════════════════════════════════════════════ */
+async function loadAssignmentsPage() {
+    // Populate dropdowns
+    const [reps, levels, callTypes] = await Promise.all([
+        api('GET', '/api/representatives'),
+        api('GET', '/api/levels'),
+        api('GET', '/api/call-types'),
+    ]);
+    _reps = reps;
+    _callTypes = callTypes;
+
+    const repOpts = reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    $('assignRep').innerHTML  = '<option value="">Select rep…</option>'    + repOpts;
+    $('filterAssignRep').innerHTML = '<option value="">All reps</option>' + repOpts;
+    $('filterHistoryRep').innerHTML = '<option value="">All reps</option>' + repOpts;
+
+    $('assignLevel').innerHTML = '<option value="">Select level…</option>' +
+        levels.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+    const ctOpts = callTypes.map(ct => `<option value="${ct.id}">${ct.title}</option>`).join('');
+    $('assignCallType').innerHTML = '<option value="">Select call type…</option>' + ctOpts;
+
+    loadAssignments();
+}
+
+async function loadAssignments() {
+    const repId  = $('filterAssignRep').value;
+    const status = $('filterAssignStatus').value;
+    let url = '/api/assignments?';
+    if (repId)  url += `rep_id=${repId}&`;
+    if (status) url += `status=${status}&`;
+    const items = await api('GET', url);
+    const tbody = $('assignmentsBody');
+    if (!items.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">No assignments found.</td></tr>'; return; }
+    tbody.innerHTML = items.map(a => `
+        <tr>
+            <td>${a.id}</td>
+            <td>${a.rep_name || a.rep_id}</td>
+            <td>${levelBadge(a.level_name || '')}</td>
+            <td style="font-size:12px;">${a.call_type || a.call_type_id}</td>
+            <td>${statusBadge(a.status)}</td>
+            <td style="font-size:12px;color:var(--muted);">${fmtDate(a.assigned_at)}</td>
+            <td class="td-actions">
+                ${a.status !== 'completed' ? `<button class="btn-success btn-sm" onclick="markComplete(${a.id})">✓ Complete</button>` : ''}
+                <button class="btn-danger btn-sm" onclick="deleteAssignment(${a.id})">🗑</button>
+            </td>
+        </tr>`).join('');
+}
+
+async function createAssignment() {
+    const rep_id       = parseInt($('assignRep').value);
+    const level_id     = parseInt($('assignLevel').value);
+    const call_type_id = parseInt($('assignCallType').value);
+    if (!rep_id || !level_id || !call_type_id) { toast('Select rep, level, and call type.', true); return; }
+    try {
+        await api('POST', '/api/assignments', { rep_id, level_id, call_type_id });
+        toast('Assignment created.');
+        loadAssignments();
+    } catch (e) { toast(e.message, true); }
+}
+
+async function markComplete(id) {
+    try { await api('PUT', `/api/assignments/${id}`, { status: 'completed' }); toast('Marked as completed.'); loadAssignments(); }
+    catch (e) { toast(e.message, true); }
+}
+
+async function deleteAssignment(id) {
+    if (!confirm('Delete this assignment?')) return;
+    try { await api('DELETE', `/api/assignments/${id}`); toast('Assignment deleted.'); loadAssignments(); }
+    catch (e) { toast(e.message, true); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB 6 — FEEDBACK HISTORY
+═══════════════════════════════════════════════════════════════ */
+async function loadHistoryPage() {
+    const [reps, scenarios] = await Promise.all([
+        api('GET', '/api/representatives'),
+        fetch('/scenarios').then(r => r.json()),
+    ]);
+    const repOpts = reps.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    $('filterHistoryRep').innerHTML = '<option value="">All reps</option>' + repOpts;
+    $('filterHistoryScenario').innerHTML = '<option value="">All scenarios</option>' +
+        Object.entries(scenarios).map(([k, v]) => `<option value="${k}">${v.title}</option>`).join('');
+    loadHistory();
+}
+
+async function loadHistory() {
+    const repId    = $('filterHistoryRep').value;
+    const scenario = $('filterHistoryScenario').value;
+    let url = '/api/feedback-results?';
+    if (repId)    url += `rep_id=${repId}&`;
+    if (scenario) url += `scenario_key=${scenario}&`;
+    const results = await api('GET', url);
+    const container = $('historyCards');
+    if (!results.length) { container.innerHTML = '<p class="empty">No feedback results yet. Complete a training call and generate a report.</p>'; return; }
+    container.innerHTML = results.map(r => {
+        const params = r.parameters || {};
+        const rows = Object.entries(params).map(([key, p]) => {
+            if (!p) return '';
+            const pct   = ((p.score || 0) / 10) * 100;
+            const color = p.score >= 8 ? '#4ade80' : p.score >= 5 ? '#facc15' : '#f87171';
+            const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            return `
+                <div class="feedback-row">
+                    <div class="feedback-param">${label}</div>
+                    <div class="score-bar-wrap"><div class="score-bar" style="width:${pct}%;background:${color}"></div></div>
+                    <div class="score-num" style="color:${color}">${p.score}/10</div>
+                    <div class="feedback-comment">${p.comment || ''}</div>
+                </div>`;
+        }).join('');
+        return `
+            <div style="margin-bottom:16px;background:rgba(7,13,26,0.7);border:1px solid var(--border-l);border-radius:14px;overflow:hidden;">
+                <div class="feedback-header">
+                    <div>
+                        <div class="section-label" style="margin-bottom:2px;">${r.scenario_title || r.scenario_key}</div>
+                        <div style="font-size:11px;color:var(--muted);">${r.rep_id ? 'Rep #' + r.rep_id : 'Anonymous'} · ${fmtDate(r.created_at)}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="text-align:right;">
+                            <div class="overall-score">${r.overall}</div>
+                            <div class="overall-label">Overall / 10</div>
+                        </div>
+                        <button class="btn-danger btn-sm" onclick="deleteHistory(${r.id})">🗑</button>
+                    </div>
+                </div>
+                <div class="feedback-rows">${rows}</div>
+            </div>`;
+    }).join('');
+}
+
+async function deleteHistory(id) {
+    if (!confirm('Delete this feedback result?')) return;
+    try { await api('DELETE', `/api/feedback-results/${id}`); toast('Result deleted.'); loadHistory(); }
+    catch (e) { toast(e.message, true); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VOICE SIMULATOR (Tab 1) — unchanged logic
+═══════════════════════════════════════════════════════════════ */
+let current = null, starting = false, testing = false, generation = 0;
+
+const captureWorklet = `
+class CapturePCM extends AudioWorkletProcessor {
+    constructor() { super(); this.buffer=new ArrayBuffer(2400*2); this.view=new DataView(this.buffer); this.position=0; }
+    process(inputs) {
+        const input=inputs[0]?.[0];
+        if(input){
+            for(let i=0;i<input.length;i++){
+                const s=Math.max(-1,Math.min(1,input[i]));
+                this.view.setInt16(this.position*2,s<0?s*32768:s*32767,true);
+                this.position++;
+                if(this.position===2400){
+                    this.port.postMessage(this.buffer,[this.buffer]);
+                    this.buffer=new ArrayBuffer(2400*2); this.view=new DataView(this.buffer); this.position=0;
+                }
+            }
+        }
+        return true;
+    }
+}
+registerProcessor("capture-pcm",CapturePCM);`;
+
+function log(m){const l=$('log');const lines=l.textContent.split('\n').slice(-80);lines.push(`${new Date().toLocaleTimeString()} ${m}`);l.textContent=lines.join('\n');l.scrollTop=l.scrollHeight;}
+function simStatus(m,err=false){$('status').textContent=m;$('status').classList.toggle('error',err);}
+function indicator(who,active,label){const id=who==='user'?'userOrb':'botOrb';$(id).classList.toggle('active',active);$(who+'Label').textContent=label;}
+function buttons(){$('start').disabled=starting||testing||Boolean(current);$('test').disabled=starting||testing||Boolean(current);$('stop').disabled=!starting&&!current;}
+function send(s,m){if(s.ws?.readyState===WebSocket.OPEN)s.ws.send(JSON.stringify(m));}
+
+function clearPlayback(s){for(const p of s.pieces){p.node.onended=null;try{p.node.stop();}catch{}p.node.disconnect();}s.pieces=[];s.played.clear();s.nextTime=s.ctx.currentTime;indicator('bot',false,'Idle');}
+
+function interruptBot(s){
+    const now=s.ctx.currentTime;
+    const affected=new Set(s.pieces.map(p=>p.item));
+    for(const item of affected){
+        let heard=s.played.get(item)||0;
+        for(const p of s.pieces) if(p.item===item) heard+=Math.max(0,Math.min(p.end-p.start,now-p.start));
+        send(s,{type:'truncate',item_id:item,audio_end_ms:Math.floor(heard*1000)});
+    }
+    if(s.responseId) s.blocked.add(s.responseId);
+    clearPlayback(s);
+}
+
+function queueAudio(s,msg){
+    if(s.blocked.has(msg.response_id)) return;
+    if(s.ctx.state!=='running') throw new Error(`Audio ${s.ctx.state}. Stop and Start again.`);
+    const raw=atob(msg.audio); if(!raw.length||raw.length%2) throw new Error('Invalid PCM16');
+    const bytes=new Uint8Array(raw.length); for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
+    const view=new DataView(bytes.buffer);
+    const buf=s.ctx.createBuffer(1,bytes.length/2,24000);
+    const samples=buf.getChannelData(0);
+    for(let i=0;i<samples.length;i++) samples[i]=view.getInt16(i*2,true)/32768;
+    const node=s.ctx.createBufferSource(); node.buffer=buf; node.connect(s.outputGain);
+    const start=Math.max(s.nextTime,s.ctx.currentTime+0.04);
+    const piece={node,item:msg.item_id,start,end:start+buf.duration};
+    s.nextTime=piece.end; s.pieces.push(piece);
+    node.onended=()=>{s.played.set(piece.item,(s.played.get(piece.item)||0)+buf.duration);s.pieces=s.pieces.filter(p=>p!==piece);node.disconnect();};
+    node.start(start); s.chunks++;
+    $('stats').textContent=`Bot audio chunks received: ${s.chunks} | Audio: ${s.ctx.state}`;
+}
+
+function updateBlinkers(s){
+    if(current!==s) return;
+    const now=s.ctx.currentTime;
+    const playing=s.ctx.state==='running'&&s.pieces.some(p=>now>=p.start&&now<p.end);
+    indicator('bot',playing,playing?'Speaking':s.generating?'Generating…':s.pieces.length?'Buffered':'Idle');
+    if(s.userSpeaking) simStatus('Listening to you…');
+    else if(playing) simStatus('Bot speaking…');
+    else if(s.generating) simStatus('Generating response…');
+    else if(s.ready) simStatus('Ready — speak into your microphone');
+    s.animation=requestAnimationFrame(()=>updateBlinkers(s));
+}
+
+function handleEvent(s,msg){
+    switch(msg.type){
+        case 'ready': s.ready=true;clearTimeout(s.connectTimer);log('Azure voice session ready');indicator('user',false,'Listening');break;
+        case 'user_started': s.userSpeaking=true;s.generating=false;interruptBot(s);indicator('user',true,'Speaking');break;
+        case 'user_stopped': s.userSpeaking=false;s.generating=true;indicator('user',false,'Listening');break;
+        case 'response_started': s.responseId=msg.response_id;s.generating=true;$('transcript').textContent='';break;
+        case 'audio': queueAudio(s,msg);break;
+        case 'transcript': if(!s.blocked.has(msg.response_id)) $('transcript').textContent+=msg.delta;break;
+        case 'response_done': if(msg.response_id===s.responseId)s.generating=false;log(`Response: ${msg.status}`);break;
+        case 'error': fail(msg.message);break;
+    }
+}
+
+function fail(m){log(`ERROR: ${m}`);stopConversation(m,true);}
+
+function showFeedback(report){
+    const panel=$('feedbackPanel');
+    panel.innerHTML=`<div class="feedback-header"><div><div class="section-label">Performance Report</div></div><div style="text-align:right"><div class="overall-score">${report.overall}</div><div class="overall-label">Overall / 10</div></div></div><div class="feedback-rows" id="feedbackRows"></div>`;
+    for(const p of report.parameters){
+        const pct=(p.score/10)*100;
+        const color=p.score>=8?'#4ade80':p.score>=5?'#facc15':'#f87171';
+        $('feedbackRows').insertAdjacentHTML('beforeend',`<div class="feedback-row"><div class="feedback-param">${p.label}</div><div class="score-bar-wrap"><div class="score-bar" style="width:${pct}%;background:${color}"></div></div><div class="score-num" style="color:${color}">${p.score}/10</div><div class="feedback-comment">${p.comment}</div></div>`);
+    }
+    panel.style.display='block';
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function showFeedbackPrompt(){const p=$('feedbackPrompt');p.style.display='flex';p.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function hideFeedbackPrompt(){$('feedbackPrompt').style.display='none';}
+
+async function requestFeedback(){
+    hideFeedbackPrompt();
+    const panel=$('feedbackPanel'); panel.style.display='block';
+    panel.innerHTML='<div class="feedback-generating"><div class="spinner"></div>Analysing call…</div>';
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+    try{
+        const res=await fetch('/feedback',{method:'POST'});
+        const report=await res.json();
+        if(report.error) throw new Error(report.error);
+        showFeedback(report); simStatus('Feedback report ready.');
+    }catch(e){panel.style.display='none';simStatus(`Feedback failed: ${e.message}`,true);}
+}
+
+function stopConversation(msg='Conversation stopped.',err=false){
+    generation++; starting=false;
+    const s=current; current=null;
+    if(s){
+        clearTimeout(s.connectTimer); cancelAnimationFrame(s.animation); s.ready=false;
+        if(s.worklet){s.worklet.port.onmessage=null;s.worklet.disconnect();}
+        s.source?.disconnect(); s.stream?.getTracks().forEach(t=>t.stop());
+        clearPlayback(s); s.outputGain?.disconnect();
+        if(s.ws){s.ws.onclose=null;s.ws.onerror=null;s.ws.onmessage=null;s.ws.close();}
+        if(s.ctx.state!=='closed') s.ctx.close().catch(console.error);
+    }
+    indicator('user',false,'Idle'); indicator('bot',false,'Idle');
+    simStatus(msg,err); lockScenario(false); buttons();
+    if(!err&&s) showFeedbackPrompt();
+}
+
+async function startConversation(){
+    if(starting||current||testing) return;
+    starting=true; const attempt=++generation; buttons(); lockScenario(true);
+    simStatus('Initializing microphone and speaker…');
+    try{
+        const ctx=new AudioContext({sampleRate:24000,latencyHint:'interactive'});
+        const s={ctx,ready:false,userSpeaking:false,generating:false,pieces:[],played:new Map(),blocked:new Set(),chunks:0,nextTime:0};
+        current=s; await ctx.resume();
+        if(attempt!==generation) return;
+        if(ctx.state!=='running') throw new Error('Browser blocked audio. Click Start again.');
+        if(ctx.sampleRate!==24000) throw new Error('Browser did not provide 24-kHz audio.');
+        s.outputGain=ctx.createGain(); s.outputGain.gain.value=Number($('volume').value); s.outputGain.connect(ctx.destination);
+        const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+        if(attempt!==generation){stream.getTracks().forEach(t=>t.stop());return;}
+        s.stream=stream;
+        const url=URL.createObjectURL(new Blob([captureWorklet],{type:'text/javascript'}));
+        try{await ctx.audioWorklet.addModule(url);}finally{URL.revokeObjectURL(url);}
+        if(attempt!==generation) return;
+        s.source=ctx.createMediaStreamSource(stream);
+        s.worklet=new AudioWorkletNode(ctx,'capture-pcm',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]});
+        s.source.connect(s.worklet); s.worklet.connect(ctx.destination);
+        const proto=location.protocol==='https:'?'wss:':'ws:';
+        s.ws=new WebSocket(`${proto}//${location.host}/ws/audio?scenario=${selectedScenario}`);
+        s.worklet.port.onmessage=e=>{
+            if(current!==s||!s.ready) return;
+            if(s.ws.readyState!==WebSocket.OPEN) return;
+            if(s.ws.bufferedAmount>256000){fail('Network too slow for live audio. Reconnect.');return;}
+            s.ws.send(e.data);
+        };
+        s.ws.onmessage=e=>{if(current!==s)return;try{handleEvent(s,JSON.parse(e.data));}catch(err){fail(err.message);}};
+        s.ws.onerror=()=>{if(current===s)fail('WebSocket error. Check the FastAPI terminal.');};
+        s.ws.onclose=()=>{if(current===s)stopConversation('Connection closed. Press Start to reconnect.');};
+        s.connectTimer=setTimeout(()=>{if(current===s&&!s.ready)fail('Azure timed out. Check the terminal.');},45000);
+        s.worklet.onprocessorerror=()=>{if(current===s)fail('Microphone processor failed.');};
+        starting=false; buttons();
+        $('stats').textContent='Bot audio chunks received: 0';
+        $('transcript').textContent='';
+        $('feedbackPanel').style.display='none';
+        $('feedbackPrompt').style.display='none';
+        log(`Browser audio at ${ctx.sampleRate} Hz`); simStatus('Connecting to Azure…');
+        updateBlinkers(s);
+    }catch(err){if(attempt===generation)fail(err.message);}
+}
+
+async function testSpeaker(){
+    if(current||starting||testing) return;
+    testing=true; buttons(); let ctx;
+    try{
+        ctx=new AudioContext(); await ctx.resume();
+        const osc=ctx.createOscillator(); const gain=ctx.createGain();
+        osc.frequency.value=660; gain.gain.value=0.08; osc.connect(gain); gain.connect(ctx.destination); osc.start();
+        await new Promise(res=>{osc.onended=res;osc.stop(ctx.currentTime+0.35);});
+        simStatus('Speaker test finished. If you heard the beep, press Start.');
+    }catch(err){simStatus(`Speaker test error: ${err.message}`,true);}
+    finally{if(ctx&&ctx.state!=='closed')await ctx.close();testing=false;buttons();}
+}
+
+/* Scenario selector */
+let selectedScenario=null, scenarioData={};
+async function loadScenarios(){
+    try{
+        scenarioData=await fetch('/scenarios').then(r=>r.json());
+        const sel=$('scenarioSelect');
+        for(const[key,s] of Object.entries(scenarioData)){
+            const opt=document.createElement('option'); opt.value=key; opt.textContent=s.title; sel.appendChild(opt);
+        }
+        selectedScenario=sel.value;
+        $('scenarioDesc').textContent=scenarioData[selectedScenario]?.description||'';
+        sel.onchange=()=>{
+            if(current||starting){sel.value=selectedScenario;return;}
+            selectedScenario=sel.value;
+            $('scenarioDesc').textContent=scenarioData[selectedScenario]?.description||'';
+        };
+    }catch(e){console.error('Could not load scenarios',e);}
+}
+function lockScenario(locked){$('scenarioSelect').disabled=locked;}
+
+loadScenarios();
+$('start').onclick=startConversation;
+$('stop').onclick=()=>stopConversation();
+$('test').onclick=testSpeaker;
+$('btnYesFeedback').onclick=requestFeedback;
+$('btnNoFeedback').onclick=hideFeedbackPrompt;
+$('volume').oninput=()=>{
+    const v=Number($('volume').value);
+    $('volValue').textContent=Math.round(v*100)+'%';
+    if(current?.outputGain) current.outputGain.gain.value=v;
+};
+window.addEventListener('beforeunload',()=>stopConversation());
+</script>
+</body>
+</html>
