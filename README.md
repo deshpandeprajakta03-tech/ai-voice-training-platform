@@ -8,7 +8,7 @@ The system is built on a base voice simulator originally developed by my profess
 
 ## Demo
 
-> Run the project locally and open `http://127.0.0.1:8000`
+[![Watch the demo](https://img.youtube.com/vi/F5r6Q6-BSms/maxresdefault.jpg)](https://youtu.be/F5r6Q6-BSms)
 
 ---
 
